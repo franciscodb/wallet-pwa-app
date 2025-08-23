@@ -1,4 +1,4 @@
-// src/utils/addMonadNetwork.js
+// Función helper para agregar Monad Testnet a MetaMask
 export async function addMonadTestnetToMetaMask() {
   if (!window.ethereum) {
     console.log('MetaMask no está instalado')
@@ -6,37 +6,31 @@ export async function addMonadTestnetToMetaMask() {
   }
 
   try {
-    // Intentar agregar la red
+    // Los valores de Monad Testnet según Reown
     await window.ethereum.request({
       method: 'wallet_addEthereumChain',
       params: [{
-        chainId: '0x279F', // 10143 en hexadecimal
+        chainId: '0xA1EE', // 41454 en hex (es el chain ID oficial de Monad en Reown)
         chainName: 'Monad Testnet',
         nativeCurrency: {
           name: 'Monad',
           symbol: 'MON',
           decimals: 18
         },
-        rpcUrls: ['https://testnet-rpc.monad.xyz'],
-        blockExplorerUrls: ['https://testnet.monadexplorer.com']
+        rpcUrls: ['https://testnet.monad.xyz'],
+        blockExplorerUrls: ['https://explorer.testnet.monad.xyz']
       }]
     })
     
     console.log('Red Monad Testnet agregada exitosamente')
     return true
   } catch (error) {
-    // Error 4001 significa que el usuario rechazó la solicitud
-    if (error.code === 4001) {
-      console.log('Usuario rechazó agregar la red')
-      return false
-    }
-    
-    // Error 4902 significa que la red ya existe, intentar cambiar a ella
+    // Si la red ya existe, intentar cambiar a ella
     if (error.code === 4902) {
       try {
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x279F' }]
+          params: [{ chainId: '0xA1EE' }]
         })
         console.log('Cambiado a Monad Testnet')
         return true
