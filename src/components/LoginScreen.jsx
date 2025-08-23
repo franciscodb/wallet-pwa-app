@@ -15,7 +15,11 @@ function LoginScreen() {
   }, [isConnected, navigate])
 
   const handleConnect = async () => {
-    await open()
+    try {
+      await open()
+    } catch (error) {
+      console.error('Error opening wallet modal:', error)
+    }
   }
 
   return (
@@ -35,13 +39,14 @@ function LoginScreen() {
         <div className="login-header">
           <h1>Bienvenido</h1>
           <p>Conecta tu wallet para comenzar</p>
+          <span className="network-badge">Red: Monad Testnet</span>
         </div>
 
         {/* Botón de conexión */}
         <button className="connect-button" onClick={handleConnect}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="wallet-icon">
             <path d="M21 18V19C21 20.1 20.1 21 19 21H5C3.89 21 3 20.1 3 19V5C3 3.9 3.89 3 5 3H19C20.1 3 21 3.9 21 5V6H12C10.89 6 10 6.9 10 8V16C10 17.1 10.89 18 12 18H21ZM12 16H22V8H12V16ZM16 13.5C15.17 13.5 14.5 12.83 14.5 12C14.5 11.17 15.17 10.5 16 10.5C16.83 10.5 17.5 11.17 17.5 12C17.5 12.83 16.83 13.5 16 13.5Z" 
-              fill="white"/>
+            fill="white"/>
           </svg>
           Conectar Wallet
         </button>
@@ -59,14 +64,14 @@ function LoginScreen() {
             <div className="feature-icon">⚡</div>
             <div className="feature-text">
               <h3>Rápido</h3>
-              <p>Acceso instantáneo</p>
+              <p>Transacciones en Monad</p>
             </div>
           </div>
           <div className="feature">
             <div className="feature-icon">🌐</div>
             <div className="feature-text">
-              <h3>Multi-chain</h3>
-              <p>Soporte múltiples redes</p>
+              <h3>Testnet</h3>
+              <p>Chain ID: 41454</p>
             </div>
           </div>
         </div>
