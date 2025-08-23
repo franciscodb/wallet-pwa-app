@@ -1,0 +1,61 @@
+{
+  "name": "Wallet Connect PWA",
+  "short_name": "WalletPWA",
+  "description": "Aplicación PWA con conexión de wallet blockchain",
+  "theme_color": "#4A90E2",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "id": "wallet-pwa-app",
+  "categories": ["finance", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Conectar Wallet",
+      "short_name": "Conectar",
+      "description": "Conecta tu wallet rápidamente",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/login.png",
+      "type": "image/png",
+      "sizes": "412x915",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/welcome.png",
+      "type": "image/png",
+      "sizes": "412x915",
+      "form_factor": "narrow"
+    }
+  ]
+}
