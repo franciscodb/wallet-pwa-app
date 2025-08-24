@@ -1,0 +1,600 @@
+/* LoanDetail.css */
+
+.loan-detail {
+  min-height: 100vh;
+  
+  padding: 20px;
+  padding-bottom: 80px;
+}
+
+/* Header */
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding: 0 4px;
+}
+
+.detail-header h1 {
+
+  font-size: 24px;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+}
+
+.back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(-2px);
+}
+
+.back-btn svg {
+  color: white;
+}
+
+.status-indicator {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.status-indicator[data-status="active"] {
+  background: rgba(46, 213, 115, 0.2);
+  color: #2ed573;
+  border: 1px solid #2ed573;
+}
+
+.status-indicator[data-status="pending"] {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  border: 1px solid #ffc107;
+}
+
+.status-indicator[data-status="funded"] {
+  background: rgba(32, 201, 151, 0.2);
+  color: #20c997;
+  border: 1px solid #20c997;
+}
+
+/* Summary Card */
+.loan-summary-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.loan-type {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.type-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.loan-type h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 4px 0;
+  text-transform: capitalize;
+}
+
+.loan-type p {
+  font-size: 14px;
+  color: #95a5a6;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.credit-score {
+  text-align: center;
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  min-width: 100px;
+}
+
+.score-label {
+  display: block;
+  font-size: 12px;
+  color: #95a5a6;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.score-value {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.risk-indicator {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Amount Section */
+.amount-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.amount-item {
+  text-align: center;
+}
+
+.amount-item .label {
+  display: block;
+  font-size: 12px;
+  color: #95a5a6;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.amount-item .value {
+  display: block;
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Investment Opportunity Section */
+.investment-opportunity {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.investment-opportunity h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+/* Opportunity Metrics */
+.opportunity-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.metric-label {
+  display: block;
+  font-size: 12px;
+  color: #95a5a6;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 4px;
+}
+
+.metric-detail {
+  display: block;
+  font-size: 11px;
+  color: #95a5a6;
+}
+
+/* Funding Progress */
+.funding-progress {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.funding-progress h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 16px;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.stat {
+  text-align: center;
+  flex: 1;
+}
+
+.stat .label {
+  display: block;
+  font-size: 12px;
+  color: #95a5a6;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat .value {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.progress-bar-container {
+  margin-top: 16px;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.funding-fill {
+  background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
+}
+
+.progress-text {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  color: #95a5a6;
+  font-weight: 600;
+}
+
+/* Investment Form */
+.investment-form {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.investment-form h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.investment-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.info-row:not(:last-child) {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.info-row span:first-child {
+  font-size: 14px;
+  color: #95a5a6;
+}
+
+.info-row span:last-child {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.investment-form label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 0 16px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+}
+
+.input-group:focus-within {
+  border-color: #667eea;
+  background: white;
+}
+
+.currency {
+  font-size: 18px;
+  font-weight: 600;
+  color: #95a5a6;
+  margin-right: 8px;
+}
+
+.input-group input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  padding: 16px 0;
+  outline: none;
+}
+
+.input-group input::placeholder {
+  color: #bdc3c7;
+  font-weight: 400;
+}
+
+/* Quick Amount Buttons */
+.quick-amounts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.quick-amounts button {
+  padding: 12px;
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.quick-amounts button:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+/* Invest Button */
+.invest-btn {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 16px;
+}
+
+.invest-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
+.invest-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Investment Disclaimer */
+.investment-disclaimer {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+}
+
+.investment-disclaimer p {
+  margin: 0;
+  font-size: 12px;
+  color: #856404;
+  line-height: 1.5;
+}
+
+.investment-disclaimer p:first-child {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* Loading and Error States */
+.loading-screen,
+.error-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f0f0f0;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-screen h2 {
+  color: #e74c3c;
+  margin-bottom: 12px;
+}
+
+.back-btn-large {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+/* Owner Notice */
+.owner-notice {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+}
+
+.owner-notice h2 {
+  color: #2c3e50;
+  margin-bottom: 12px;
+}
+
+.owner-notice p {
+  color: #95a5a6;
+  margin-bottom: 24px;
+}
+
+.view-loan-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 12px;
+}
+
+/* Fully Funded Notice */
+.fully-funded-notice {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+}
+
+.fully-funded-notice h3 {
+  color: #27ae60;
+  margin-bottom: 12px;
+}
+
+.fully-funded-notice p {
+  color: #95a5a6;
+  margin-bottom: 24px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .loan-detail {
+    padding: 16px;
+  }
+
+  .amount-section,
+  .opportunity-metrics {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .quick-amounts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .progress-stats {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .summary-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .credit-score {
+    width: 100%;
+  }
+}

@@ -178,7 +178,7 @@ function LoansScreen() {
               <div 
                 key={loan.id} 
                 className="loan-item"
-                onClick={() => navigate(`/loan/${loan.id}`)}
+                onClick={() => navigate(`/loaninvest/${loan.id}`)}
               >
                 <div className="loan-item-header">
                   <div className="loan-icon-container">
