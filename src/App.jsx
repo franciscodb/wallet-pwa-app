@@ -12,6 +12,9 @@ import ProfileScreen from './components/ProfileScreen'
 import BottomNavigation from './components/BottomNavigation'
 import { AppProvider } from './context/AppContext'
 
+import LoanDetail from './components/LoanDetail'
+import Loans from './components/Loans'
+
 function App() {
   const { isConnected } = useAccount()
   const [showWelcome, setShowWelcome] = useState(true)
@@ -47,67 +50,91 @@ function App() {
       <Router>
         <div className="app">
           <Routes>
-            <Route 
-              path="/" 
-              element={!isConnected ? <LoginScreen /> : <Navigate to="/home" />} 
+            <Route
+              path="/"
+              element={!isConnected ? <LoginScreen /> : <Navigate to="/home" />}
             />
-            <Route 
-              path="/welcome" 
-              element={isConnected && showWelcome ? <WelcomeScreen /> : <Navigate to="/home" />} 
+            <Route
+              path="/welcome"
+              element={isConnected && showWelcome ? <WelcomeScreen /> : <Navigate to="/home" />}
             />
-            <Route 
-              path="/home" 
+            <Route
+              path="/home"
               element={isConnected ? (
                 <>
                   <HomeDashboard />
                   <BottomNavigation />
                 </>
-              ) : <Navigate to="/" />} 
+              ) : <Navigate to="/" />}
             />
-            <Route 
-              path="/request-loan" 
+  
+
+             <Route
+             path="/loans-personal"
+              element={isConnected ? (
+                <>
+                
+                  <Loans />
+                  <BottomNavigation />
+                </>
+              ) : <Navigate to="/" />}
+            />
+
+            <Route
+            path="/loan/:id"
+              element={isConnected ? (
+                <>
+                
+                  <LoanDetail />
+                  <BottomNavigation />
+                </>
+              ) : <Navigate to="/" />}
+            />
+
+            <Route
+              path="/request-loan"
               element={isConnected ? (
                 <>
                   <RequestLoan />
                   <BottomNavigation />
                 </>
-              ) : <Navigate to="/" />} 
+              ) : <Navigate to="/" />}
             />
-            <Route 
-              path="/invest" 
+            <Route
+              path="/invest"
               element={isConnected ? (
                 <>
                   <LoanMarketplace />
                   <BottomNavigation />
                 </>
-              ) : <Navigate to="/" />} 
+              ) : <Navigate to="/" />}
             />
-            <Route 
-              path="/loans" 
+            <Route
+              path="/loans"
               element={isConnected ? (
                 <>
                   <LoansScreen />
                   <BottomNavigation />
                 </>
-              ) : <Navigate to="/" />} 
+              ) : <Navigate to="/" />}
             />
-            <Route 
-              path="/loan/:id" 
+            <Route
+              path="/loan/:id"
               element={isConnected ? (
                 <>
                   <LoanDetails />
                   <BottomNavigation />
                 </>
-              ) : <Navigate to="/" />} 
+              ) : <Navigate to="/" />}
             />
-            <Route 
-              path="/profile" 
+            <Route
+              path="/profile"
               element={isConnected ? (
                 <>
                   <ProfileScreen />
                   <BottomNavigation />
                 </>
-              ) : <Navigate to="/" />} 
+              ) : <Navigate to="/" />}
             />
           </Routes>
         </div>
