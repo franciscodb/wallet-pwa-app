@@ -504,7 +504,8 @@ export class CreditScoringService {
 
                 // Campos adicionales que podrías querer guardar
                 collateral_type: 'none',
-                collateral_value: 0
+                collateral_value: 0,
+                wallet_address: walletAddress
             }
 
             console.log('💾 Saving loan request record:', loanRequestRecord)
@@ -749,6 +750,129 @@ export class CreditScoringService {
         }
     }
 
+    // Obtener historial de préstamos del usuario
+    async getUserLoanHistory(walletAddress) {
+        try {
+            const { data, error } = await supabase
+                .from('loan_requests')
+                .select(`
+                *,
+                credit_evaluations (
+                    final_score,
+                    interest_rate,
+                    category
+                ),
+                users!inner (
+                    wallet_address
+                )
+            `)
+                .eq('users.wallet_address', walletAddress)
+                .order('created_at', { ascending: false })
+
+            if (error) {
+                console.error('Error fetching loan history:', error)
+                return []
+            }
+
+            return data || []
+        } catch (error) {
+            console.error('Error in getUserLoanHistory:', error)
+            return []
+        }
+    }
+
+    // Obtener un préstamo por ID
+    async getLoanById(loanId) {
+        try {
+            const { data, error } = await supabase
+                .from('loan_requests')
+                .select(`
+                *,
+                credit_evaluations (
+                    final_score,
+                    category,
+                    contributions
+                )
+            `)
+                .eq('id', loanId)
+                .single()
+
+            if (error) throw error
+
+            // Mapear credit score si existe
+            if (data?.credit_evaluations) {
+                data.credit_score = data.credit_evaluations.final_score
+                data.category = data.credit_evaluations.category
+            }
+
+            return data
+        } catch (error) {
+            console.error('Error fetching loan:', error)
+            return null
+        }
+    }
+
+    // Obtener historial de préstamos del usuario
+    // Obtener historial de préstamos del usuario
+    async getUserLoanHistory(walletAddress) {
+        try {
+            // Primero obtener el user_id basado en wallet_address
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('id')
+                .eq('wallet_address', walletAddress)
+                .single()
+
+            if (userError || !userData) {
+                console.log('User not found for wallet:', walletAddress)
+                return []
+            }
+
+            // Obtener solo los loan_requests sin el join problemático
+            const { data: loans, error: loansError } = await supabase
+                .from('loan_requests')
+                .select('*')
+                .eq('wallet_address', walletAddress)
+                .order('created_at', { ascending: false })
+
+            if (loansError) {
+                console.error('Error fetching loans:', loansError)
+                return []
+            }
+
+            // Si necesitas los credit_evaluations, hazlo en una consulta separada
+            if (loans && loans.length > 0) {
+                // Obtener las evaluaciones crediticias por separado
+                const evaluationIds = loans
+                    .map(loan => loan.credit_evaluation_id)
+                    .filter(id => id !== null)
+
+                if (evaluationIds.length > 0) {
+                    const { data: evaluations } = await supabase
+                        .from('credit_evaluations')
+                        .select('id, final_score, interest_rate, category')
+                        .in('id', evaluationIds)
+
+                    // Combinar los datos manualmente
+                    if (evaluations) {
+                        loans.forEach(loan => {
+                            const evaluation = evaluations.find(e => e.id === loan.credit_evaluation_id)
+                            if (evaluation) {
+                                loan.credit_score = evaluation.final_score
+                                loan.category = evaluation.category
+                            }
+                        })
+                    }
+                }
+            }
+
+            return loans || []
+
+        } catch (error) {
+            console.error('Error in getUserLoanHistory:', error)
+            return []
+        }
+    }
     // Obtener mejores oportunidades de inversión
     async getInvestmentOpportunities(limit = 10) {
         try {

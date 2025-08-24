@@ -1,18 +1,61 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useAccount, useBalance } from 'wagmi'
 import { formatEther } from 'viem'
+import CreditScoringService from '../services/creditScoring'
+import { useP2PLending } from '../hooks/useP2PLending'
 
 function HomeDashboard() {
   const navigate = useNavigate()
   const { user } = useApp()
   const { address } = useAccount()
+  const { useUserProfile } = useP2PLending()
+  
+  // Estados para datos
+  const [userLoans, setUserLoans] = useState([])
+  const [platformStats, setPlatformStats] = useState(null)
+  const [loading, setLoading] = useState(true)
   
   // Obtener balance real de MON
   const { data: balance, isError, isLoading } = useBalance({
     address: address,
-    watch: true, // Actualizar automáticamente
+    watch: true,
   })
+  
+  // Obtener perfil del usuario del contrato
+  const { 
+    isRegistered, 
+    creditScore, 
+    totalBorrowed, 
+    totalRepaid, 
+    activeLoans 
+  } = useUserProfile(address)
+
+  // Cargar datos de Supabase
+  useEffect(() => {
+    const loadData = async () => {
+      if (!address) return
+      
+      setLoading(true)
+      try {
+        // Cargar historial de préstamos
+        const loans = await CreditScoringService.getUserLoanHistory(address)
+        setUserLoans(loans)
+        
+        // Cargar estadísticas de la plataforma
+        const stats = await CreditScoringService.getPlatformStats()
+        setPlatformStats(stats)
+        
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [address])
 
   // Formatear el balance
   const getBalance = () => {
@@ -20,19 +63,31 @@ function HomeDashboard() {
     if (isError) return '0.00'
     if (!balance) return '0.00'
     
-    // Convertir de wei a MON y formatear
     const balanceInMon = parseFloat(formatEther(balance.value))
     return balanceInMon.toFixed(4)
   }
 
-  const chartData = [
-    { month: 'Jan', value: 180 },
-    { month: 'Feb', value: 195 },
-    { month: 'Mar', value: 188 },
-    { month: 'Apr', value: 210 },
-    { month: 'May', value: 225 },
-    { month: 'Jun', value: 234 }
-  ]
+  // Calcular métricas
+  const calculateMetrics = () => {
+    // Total invertido (suma de approved_amount de préstamos activos)
+    const totalInvested = userLoans
+      .filter(loan => loan.status === 'active')
+      .reduce((sum, loan) => sum + (loan.approved_amount || 0), 0)
+    
+    // Interés ganado estimado
+    const interestEarned = userLoans
+      .filter(loan => loan.status === 'completed' || loan.status === 'active')
+      .reduce((sum, loan) => sum + (loan.total_interest || 0) * 0.01, 0) // 1% como ejemplo
+    
+    return {
+      totalInvested,
+      interestEarned,
+      activeLoansCount: userLoans.filter(loan => loan.status === 'active').length,
+      creditScoreNum: parseInt(creditScore || 0)
+    }
+  }
+
+  const metrics = calculateMetrics()
 
   return (
     <div className="home-dashboard">
@@ -58,7 +113,7 @@ function HomeDashboard() {
             )}
           </h2>
           <br />
-          <span className="balance-status">Available balance </span>
+          <span className="balance-status">Available balance</span>
           {!balance || parseFloat(getBalance()) === 0 ? (
             <a 
               href="https://faucet.testnet.monad.xyz" 
@@ -69,6 +124,11 @@ function HomeDashboard() {
               Get test MON from faucet →
             </a>
           ) : null}
+          {isRegistered && (
+            <div className="credit-score-badge">
+              Credit Score: {metrics.creditScoreNum}
+            </div>
+          )}
         </div>
       </div>
 
@@ -76,7 +136,7 @@ function HomeDashboard() {
         <button className="primary-btn" onClick={() => navigate('/request-loan')}>
           Request Loan
         </button>
-        <button className="secondary-btn" onClick={() => navigate('/invest')}>
+        <button className="secondary-btn" onClick={() => navigate('/loans')}>
           Invest
         </button>
       </div>
@@ -86,21 +146,25 @@ function HomeDashboard() {
         <div className="loans-summary">
           <div className="loan-stat">
             <span className="stat-label">Active Loans</span>
-            <span className="stat-value">{user.activeLoans}</span>
+            <span className="stat-value">{metrics.activeLoansCount}</span>
           </div>
           <div className="loan-stat">
             <span className="stat-label">Total Invested</span>
-            <span className="stat-value">$8,500</span>
+            <span className="stat-value">${metrics.totalInvested.toLocaleString()}</span>
           </div>
         </div>
+
+  
       </div>
 
       <div className="interest-section">
         <div className="interest-header">
           <div>
             <h3>Interest Earned</h3>
-            <h2>${user.interestEarned.toFixed(2)}</h2>
-            <span className="interest-change">Last 30 Days +12%</span>
+            <h2>${metrics.interestEarned.toFixed(2)}</h2>
+            <span className="interest-change">
+              {platformStats?.defaultRate ? `Default Rate: ${platformStats.defaultRate}%` : 'Last 30 Days'}
+            </span>
           </div>
         </div>
         

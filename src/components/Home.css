@@ -1,0 +1,126 @@
+/* Añadir en Home.css */
+.loans-section {
+    margin-top: 2rem;
+    background: var(--surface-primary);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.new-loan-btn {
+    padding: 0.5rem 1rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.loans-table {
+    overflow-x: auto;
+}
+
+.loans-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.loans-table th {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 2px solid var(--border);
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.loans-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.purpose-cell {
+    text-transform: capitalize;
+}
+
+.score-badge {
+    padding: 0.25rem 0.5rem;
+    background: var(--surface-secondary);
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    color: white;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.view-btn {
+    padding: 0.25rem 0.75rem;
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.view-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.loading-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.platform-stats {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--surface-primary);
+    border-radius: 16px;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.mini-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.mini-stat .label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.mini-stat .value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}

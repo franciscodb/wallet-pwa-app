@@ -1463,13 +1463,8 @@ body {
   margin-bottom: 24px;
 }
 
-.score-circle {
-  position: relative;
-  display: inline-block;
-}
-
 .score-value {
-  position: absolute;
+  position: relative;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -1710,4 +1705,15 @@ input:checked + .slider-switch:before {
   .bottom-navigation {
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+.score-value {
+  margin-top: 8px;     /* separa texto del ring */
+  transform: none;     /* quita transform heredado */
+  position: static;
+}
+
+
+.app {
+  padding: 0 0 var(--nav-height) 0 !important; /* top 0, sides 0, bottom = navbar */
 }
