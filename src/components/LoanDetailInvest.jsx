@@ -625,22 +625,7 @@ function LoanDetail() {
         )}
       </div>
 
-      {/* Debug Info (remover en producción) */}
-      <div style={{
-        padding: '10px',
-        background: '#f0f0f0',
-        fontSize: '12px',
-        marginTop: '20px',
-        borderRadius: '8px'
-      }}>
-        <strong>Debug Info (Testing Mode):</strong>
-        <p>Loan ID: {loan.id}</p>
-        <p>Contract Request ID: {loan.contract_request_id || 'Using fallback: 1'}</p>
-        <p>Wallet Address: {loan.wallet_address || 'Not set'}</p>
-        <p>Current User: {address || 'Not connected'}</p>
-        <p>Is Owner: {isOwner ? 'Yes' : 'No'}</p>
-        <p>Status: {loan.status}</p>
-      </div>
+   
 
       {/* Estado de transacción */}
       {txHash && (
