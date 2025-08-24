@@ -8,7 +8,7 @@
 
 .screen-header {
   background: white;
-  padding: 20px 24px;
+  padding: 100px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -644,3 +644,8 @@
     border-color: #4a5568;
   }
 }
+
+ 
+  .screen-header {
+    padding: 100px;
+  }
