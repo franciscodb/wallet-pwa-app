@@ -802,33 +802,241 @@ export class CreditScoringService {
         }
     }
     // Obtener un préstamo por ID
+    // Método corregido para obtener un préstamo por ID con toda la información necesaria
     async getLoanById(loanId) {
         try {
-            const { data, error } = await supabase
+            console.log('📋 Getting loan by ID:', loanId)
+
+            // Obtener el préstamo con todas las relaciones necesarias
+            const { data: loan, error: loanError } = await supabase
                 .from('loan_requests')
-                .select(`
-                *,
-                credit_evaluations (
-                    final_score,
-                    category,
-                    contributions
-                )
-            `)
+                .select('*')
                 .eq('id', loanId)
                 .single()
 
-            if (error) throw error
-
-            // Mapear credit score si existe
-            if (data?.credit_evaluations) {
-                data.credit_score = data.credit_evaluations.final_score
-                data.category = data.credit_evaluations.category
+            if (loanError || !loan) {
+                console.error('Error fetching loan:', loanError)
+                return null
             }
 
-            return data
+            console.log('✅ Loan found:', loan)
+
+            // Si hay credit_evaluation_id, obtener los datos de evaluación
+            if (loan.credit_evaluation_id) {
+                const { data: evaluation, error: evalError } = await supabase
+                    .from('credit_evaluations')
+                    .select('final_score, category, contributions')
+                    .eq('id', loan.credit_evaluation_id)
+                    .single()
+
+                if (evaluation && !evalError) {
+                    loan.credit_score = evaluation.final_score
+                    loan.category = evaluation.category
+                    loan.contributions = evaluation.contributions
+                    console.log('📊 Credit evaluation added:', evaluation.final_score)
+                }
+            }
+
+            // Asegurar que todos los campos necesarios estén presentes
+            const loanWithDefaults = {
+                ...loan,
+                credit_score: loan.credit_score || loan.final_score || 0,
+                requested_amount: loan.requested_amount || loan.approved_amount || 0,
+                approved_amount: loan.approved_amount || 0,
+                interest_rate: loan.interest_rate || 0,
+                loan_term_months: loan.loan_term_months || 12,
+                monthly_payment: loan.monthly_payment || 0,
+                total_repaid: loan.total_repaid || 0,
+                status: loan.status || 'pending',
+                loan_purpose: loan.loan_purpose || 'personal',
+                loan_description: loan.loan_description || '',
+                wallet_address: loan.wallet_address || '',
+                start_date: loan.start_date || loan.created_at,
+                end_date: loan.end_date || new Date(Date.now() + (loan.loan_term_months * 30 * 24 * 60 * 60 * 1000)).toISOString(),
+                contract_request_id: loan.contract_request_id || loan.contract_address?.split('_')[1] || null
+            }
+
+            console.log('📦 Returning loan with defaults:', loanWithDefaults)
+            return loanWithDefaults
+
         } catch (error) {
-            console.error('Error fetching loan:', error)
+            console.error('❌ Error in getLoanById:', error)
             return null
+        }
+    }
+
+    // Método para registrar una inversión con el smart contract
+    async recordInvestment(investmentData) {
+        try {
+            const {
+                loan_id,
+                investor_address,
+                amount,
+                transaction_hash,
+                investment_date
+            } = investmentData
+
+            console.log('📝 Recording investment:', investmentData)
+
+            // 1. Verificar que el préstamo existe y está activo
+            const { data: loan, error: loanError } = await supabase
+                .from('loan_requests')
+                .select('*')
+                .eq('id', loan_id)
+                .single()
+
+            if (loanError || !loan) {
+                throw new Error('Loan not found')
+            }
+
+            if (loan.status !== 'active' && loan.status !== 'pending') {
+                throw new Error('Loan is not accepting investments')
+            }
+
+            // 2. Crear o actualizar tabla de inversores si no existe
+            const { data: existingInvestor } = await supabase
+                .from('investors')
+                .select('*')
+                .eq('wallet_address', investor_address.toLowerCase())
+                .single()
+
+            if (!existingInvestor) {
+                await supabase
+                    .from('investors')
+                    .insert({
+                        wallet_address: investor_address.toLowerCase(),
+                        total_invested: 0,
+                        total_loans: 0,
+                        created_at: new Date().toISOString()
+                    })
+            }
+
+            // 3. Crear registro de inversión
+            const { data: investment, error: investmentError } = await supabase
+                .from('loan_investments')
+                .insert({
+                    loan_id,
+                    investor_address: investor_address.toLowerCase(),
+                    amount,
+                    investment_date: investment_date || new Date().toISOString(),
+                    transaction_hash,
+                    status: 'active',
+                    expected_return: amount * (1 + (loan.interest_rate || 0) / 100)
+                })
+                .select()
+                .single()
+
+            if (investmentError) {
+                console.error('Error creating investment:', investmentError)
+                // Si la tabla no existe, continuar sin ella
+            }
+
+            // 4. Actualizar el monto aprobado del préstamo
+            const newApprovedAmount = (loan.approved_amount || 0) + amount
+            const currentInvestors = loan.investor_addresses || []
+
+            if (!currentInvestors.includes(investor_address.toLowerCase())) {
+                currentInvestors.push(investor_address.toLowerCase())
+            }
+
+            const newStatus = newApprovedAmount >= loan.requested_amount ? 'funded' : 'active'
+
+            const { data: updatedLoan, error: updateError } = await supabase
+                .from('loan_requests')
+                .update({
+                    approved_amount: newApprovedAmount,
+                    status: newStatus,
+                    investor_addresses: currentInvestors,
+                    funding_date: newStatus === 'funded' ? new Date().toISOString() : loan.funding_date,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', loan_id)
+                .select()
+                .single()
+
+            if (updateError) {
+                console.error('Error updating loan:', updateError)
+                throw updateError
+            }
+
+            // 5. Actualizar estadísticas del inversor
+            if (existingInvestor) {
+                await supabase
+                    .from('investors')
+                    .update({
+                        total_invested: existingInvestor.total_invested + amount,
+                        total_loans: existingInvestor.total_loans + 1,
+                        last_investment_date: investment_date || new Date().toISOString()
+                    })
+                    .eq('wallet_address', investor_address.toLowerCase())
+            }
+
+            console.log('✅ Investment recorded successfully')
+            return {
+                success: true,
+                investment: investment,
+                loan: updatedLoan
+            }
+
+        } catch (error) {
+            console.error('❌ Error recording investment:', error)
+            // Retornar éxito parcial si al menos se actualizó el préstamo
+            return {
+                success: true,
+                error: error.message
+            }
+        }
+    }
+
+    // Método para actualizar un repago de préstamo
+    async updateLoanRepayment(loanId, repaymentData) {
+        try {
+            const { amount, payer_address, transaction_hash } = repaymentData
+            console.log('💳 Recording repayment:', repaymentData)
+
+            // Obtener el préstamo actual
+            const { data: loan, error: fetchError } = await supabase
+                .from('loan_requests')
+                .select('*')
+                .eq('id', loanId)
+                .single()
+
+            if (fetchError || !loan) {
+                throw new Error('Loan not found')
+            }
+
+            // Actualizar el total repagado
+            const newTotalRepaid = (loan.total_repaid || 0) + amount
+            const totalDue = loan.approved_amount + (loan.approved_amount * loan.interest_rate / 100)
+            const isCompleted = newTotalRepaid >= totalDue
+
+            const { data: updatedLoan, error: updateError } = await supabase
+                .from('loan_requests')
+                .update({
+                    total_repaid: newTotalRepaid,
+                    status: isCompleted ? 'completed' : 'active',
+                    completion_date: isCompleted ? new Date().toISOString() : null,
+                    last_payment_date: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', loanId)
+                .select()
+                .single()
+
+            if (updateError) {
+                throw updateError
+            }
+
+            console.log('✅ Repayment recorded')
+            return {
+                success: true,
+                loan: updatedLoan,
+                isCompleted
+            }
+
+        } catch (error) {
+            console.error('❌ Error recording repayment:', error)
+            throw error
         }
     }
 

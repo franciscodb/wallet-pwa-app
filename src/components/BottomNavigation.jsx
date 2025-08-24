@@ -44,7 +44,7 @@ function BottomNavigation() {
                 <span>Opportunities</span>
             </button>
 
-       
+
 
             <button
                 className={`nav-item ${isActive('/profile') ? 'active' : ''}`}

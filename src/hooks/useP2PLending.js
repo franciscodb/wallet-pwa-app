@@ -1,25 +1,45 @@
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { parseEther, formatEther } from 'viem'
+import { parseEther, formatEther, parseGwei } from 'viem'
 import contractAddress from '../config/contractAddress.json'
 import P2PLendingABI from '../config/P2PLendingABI.json'
-import {
-    useState, useEffect
+import { useState, useEffect } from 'react'
 
-} from 'react'
+// CONFIGURACIÓN BALANCEADA: Bajo costo pero funcional
+const GAS_CONFIG = {
+    development: {
+        // Valores que funcionan en la mayoría de testnets
+        gas: 300000n, // Gas limit suficiente para la función
+        gasPrice: parseGwei('200'), // 1 Gwei - bajo pero aceptable
+    },
+    // Configuración alternativa para redes EIP-1559
+    eip1559: {
+        gas: 300000n,
+        maxFeePerGas: parseGwei('20'),
+        maxPriorityFeePerGas: parseGwei('0.1')
+    }
+}
+
+// Variable para cambiar entre modos
+const USE_EIP1559 = false // Cambiar a true si tu red soporta EIP-1559
+const ENVIRONMENT = 'development'
+
 export function useP2PLending() {
     const CONTRACT_ADDRESS = contractAddress.address
+    const gasConfig = USE_EIP1559 ? GAS_CONFIG.eip1559 : GAS_CONFIG[ENVIRONMENT]
 
-    // Hook para escribir contratos (versión wagmi v2)
+    // Hook para escribir contratos
     const { writeContract, data: writeData, isPending: isWritePending, error: writeError } = useWriteContract()
 
     // Registrar usuario
     const registerUser = async (creditScore) => {
         try {
+            console.log('📝 Registering user with gas config:', gasConfig)
             const hash = await writeContract({
                 address: CONTRACT_ADDRESS,
                 abi: P2PLendingABI,
                 functionName: 'registerUser',
-                args: [creditScore]
+                args: [creditScore],
+                ...gasConfig
             })
             return { hash, success: true }
         } catch (error) {
@@ -31,6 +51,7 @@ export function useP2PLending() {
     // Crear solicitud de préstamo
     const createLoanRequest = async (amount, rate, days, purpose) => {
         console.log("PROPUESTA", amount, rate, days, purpose)
+        console.log("Gas config:", gasConfig)
 
         try {
             const hash = await writeContract({
@@ -39,10 +60,11 @@ export function useP2PLending() {
                 functionName: 'createLoanRequest',
                 args: [
                     parseEther(amount.toString()),
-                    Math.round(rate * 100), // Convertir a basis points
-                    days, // días directamente
+                    Math.round(rate * 100),
+                    days,
                     purpose
-                ]
+                ],
+                ...gasConfig
             })
             return { hash, success: true }
         } catch (error) {
@@ -51,37 +73,80 @@ export function useP2PLending() {
         }
     }
 
-    // Invertir en préstamo
+    // Invertir en préstamo - FUNCIÓN CRÍTICA
     const investInLoan = async (requestId, amount) => {
         try {
+            // ASEGURAR QUE requestId ES UN NÚMERO
+            const requestIdNumber = typeof requestId === 'number' ? requestId : parseInt(requestId, 10)
+
+            if (isNaN(requestIdNumber)) {
+                throw new Error('Invalid request ID: must be a number')
+            }
+
+            console.log('💸 Investment Configuration:')
+            console.log('  Request ID (number):', requestIdNumber)
+            console.log('  Type:', typeof requestIdNumber)
+            console.log('  Amount in MON:', amount)
+            console.log('  Contract:', CONTRACT_ADDRESS)
+
+            const gasConfig = {
+                gas: 500000n, // Aumentar gas limit
+                gasPrice: parseGwei('30') // 30 Gwei
+            }
+
             const hash = await writeContract({
                 address: CONTRACT_ADDRESS,
                 abi: P2PLendingABI,
                 functionName: 'investInLoan',
-                args: [requestId],
-                value: parseEther(amount.toString())
+                args: [requestIdNumber], // Pasar como número, wagmi lo convertirá a BigInt
+                value: parseEther(amount.toString()),
+                ...gasConfig
             })
+
+            console.log('✅ Transaction sent:', hash)
             return { hash, success: true }
+
         } catch (error) {
-            console.error('Error investing in loan:', error)
-            return { error, success: false }
+            console.error('❌ Transaction error:', error)
+
+            // Mensajes de error más específicos
+            if (error.message?.includes('execution reverted')) {
+                // El contrato rechazó la transacción
+                const reasons = [
+                    'Request not active',
+                    'Cannot invest in own loan',
+                    'User not registered',
+                    'Insufficient value'
+                ]
+                return {
+                    success: false,
+                    error: 'Contract rejected transaction. Possible reasons: ' + reasons.join(', ')
+                }
+            }
+
+            return {
+                success: false,
+                error: error.shortMessage || error.message || 'Transaction failed'
+            }
         }
     }
 
     // Pagar préstamo
     const repayLoan = async (loanId, amount) => {
         try {
+            console.log('💳 Repaying loan:', loanId, 'Amount:', amount)
             const hash = await writeContract({
                 address: CONTRACT_ADDRESS,
                 abi: P2PLendingABI,
                 functionName: 'repayLoan',
                 args: [loanId],
-                value: parseEther(amount.toString())
+                value: parseEther(amount.toString()),
+                ...gasConfig
             })
             return { hash, success: true }
         } catch (error) {
             console.error('Error repaying loan:', error)
-            return { error, success: false }
+            return { error: error.message, success: false }
         }
     }
 
@@ -133,8 +198,8 @@ export function useP2PLending() {
 
         return {
             loanRequest: data,
-            amount: data ? formatEther(data[2]) : '0', // data[2] es amount
-            interestRate: data ? (Number(data[3]) / 100).toFixed(2) : '0', // data[3] es interestRate
+            amount: data ? formatEther(data[2]) : '0',
+            interestRate: data ? (Number(data[3]) / 100).toFixed(2) : '0',
             isLoading,
             error,
             refetch
@@ -163,7 +228,7 @@ export function useP2PLending() {
         }
     }
 
-    // Obtener contador de préstamos (para saber el total)
+    // Obtener contador de préstamos
     const useLoanCounter = () => {
         const { data, isLoading, error } = useReadContract({
             address: CONTRACT_ADDRESS,
@@ -211,11 +276,15 @@ export function useP2PLending() {
         // Estados de escritura
         isWritePending,
         writeError,
-        writeData
+        writeData,
+
+        // Configuración actual (para debugging)
+        gasConfig,
+        environment: ENVIRONMENT
     }
 }
 
-// Hook personalizado para el flujo completo de solicitud de préstamo
+// Hook para el flujo completo de solicitud de préstamo
 export function useLoanRequestFlow() {
     const [currentStep, setCurrentStep] = useState(1)
     const [transactionHash, setTransactionHash] = useState(null)
@@ -231,17 +300,13 @@ export function useLoanRequestFlow() {
             console.log('📝 Starting loan request submission...')
             setCurrentStep(3)
 
-            const amountInMon = creditAnalysis.approvedAmount / 10000; // Si 1000 USD = 1 MON
-
-            // El interest rate ya viene como porcentaje (ej: 57.2%)
-            // No necesita multiplicación adicional
+            const amountInMon = creditAnalysis.approvedAmount / 10000;
             const interestRateClean = Math.round(creditAnalysis.interestRate * 100) / 1000;
 
-
             const result = await createLoanRequest(
-                amountInMon, // Convertir wei a ETH
+                amountInMon,
                 interestRateClean,
-                loanData.loanTerm * 30, // meses a días
+                loanData.loanTerm * 30,
                 loanData.purpose
             )
 
@@ -251,7 +316,7 @@ export function useLoanRequestFlow() {
                 const newLoanRequestId = requestCounter + 1
                 setLoanRequestId(newLoanRequestId)
 
-                // GUARDAR INMEDIATAMENTE EN SUPABASE (para hackathon)
+                // Guardar en Supabase
                 try {
                     const { default: CreditScoringService } = await import('../services/creditScoring')
 
@@ -262,25 +327,20 @@ export function useLoanRequestFlow() {
                         monthlyIncome: loanData.monthlyIncome,
                         occupation: loanData.occupation || '',
                         employmentType: loanData.employmentType || 'unemployed',
-
                         loanAmount: loanData.loanAmount,
                         approvedAmount: creditAnalysis.approvedAmount,
-                        approvedAmountMon: amountInMon, // Añadir el monto en MON
+                        approvedAmountMon: amountInMon,
                         loanTerm: loanData.loanTerm,
                         interestRate: creditAnalysis.interestRate,
                         monthlyPayment: creditAnalysis.monthlyPayment,
                         purpose: loanData.purpose,
                         description: loanData.description || '',
-
                         finalScore: creditAnalysis.finalScore,
                         category: creditAnalysis.category,
                         status: creditAnalysis.status,
-
                         transactionHash: result.hash,
-                        contractRequestId: newLoanRequestId, // ID del contrato
+                        contractRequestId: newLoanRequestId,
                         blockchain_network: 'monad_testnet',
-
-                        // Incluir todos los scores para la evaluación crediticia
                         ocupacion: loanData.ocupacion,
                         antiguedadLaboral: loanData.antiguedadLaboral,
                         ingresosEstimados: loanData.ingresosEstimados,
@@ -290,8 +350,6 @@ export function useLoanRequestFlow() {
                         puntualidadPagos: loanData.puntualidadPagos,
                         ratiosFinancieros: loanData.ratiosFinancieros,
                         tipoColateral: loanData.tipoColateral,
-
-                        // Métricas adicionales
                         totalInterest: creditAnalysis.totalInterest,
                         netProfit: creditAnalysis.netProfit,
                         roiPercentage: creditAnalysis.roiPercentage,
@@ -301,14 +359,12 @@ export function useLoanRequestFlow() {
                     const saveResult = await CreditScoringService.saveLoanRequestToSupabase(dataToSave)
                     console.log('✅ Saved to Supabase:', saveResult)
 
-                    // Ir directamente a success
                     setTimeout(() => {
                         setCurrentStep(4)
-                    }, 2000) // Dar tiempo para ver el mensaje
+                    }, 2000)
 
                 } catch (error) {
                     console.error('❌ Error saving to Supabase:', error)
-                    // Aún así mostrar success ya que la transacción se envió
                     setTimeout(() => {
                         setCurrentStep(4)
                     }, 2000)
@@ -343,4 +399,5 @@ export function useLoanRequestFlow() {
         setCurrentStep
     }
 }
+
 export default useP2PLending

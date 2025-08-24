@@ -1401,8 +1401,7 @@ body {
 
 /* Profile Screen */
 .profile-screen {
-  padding: 20px;
-  padding-bottom: 100px;
+  padding: 0 1px 100px 1px;  /* menos padding lateral (12px) */
   max-width: 480px;
   margin: 0 auto;
   background: var(--bg-secondary);
@@ -1716,4 +1715,42 @@ input:checked + .slider-switch:before {
 
 .app {
   padding: 0 0 var(--nav-height) 0 !important; /* top 0, sides 0, bottom = navbar */
+}
+
+/* Quita cualquier separación extra arriba del contenido */
+.profile-content { 
+  margin-top: 0 !important;
+}
+
+/* Asegura que la primera card quede pegada al header */
+.profile-content > .profile-header { 
+  margin-top: 0 !important;
+}
+
+/* Alinea las cards al mismo gutter que Loans */
+.profile-content > .profile-header,
+.profile-content > .score-section,
+.profile-content > .settings-section {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Si en algún lado quedó un transform raro del score, neutralízalo */
+.score-value {
+  margin-top: 8px;
+  transform: none;
+  position: static;
+}
+
+
+
+/* Nada de margen arriba del contenido */
+.profile-content { 
+  margin-top: 0 !important;
+}
+
+/* La primera card empieza pegada al header */
+.profile-content > *:first-child,
+.profile-header {
+  margin-top: 0 !important;
 }
