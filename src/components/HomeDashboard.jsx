@@ -57,7 +57,8 @@ function HomeDashboard() {
               <>{getBalance()} MON</>
             )}
           </h2>
-          <span className="balance-status">Available balance</span>
+          <br />
+          <span className="balance-status">Available balance </span>
           {!balance || parseFloat(getBalance()) === 0 ? (
             <a 
               href="https://faucet.testnet.monad.xyz" 
