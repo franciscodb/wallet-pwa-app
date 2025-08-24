@@ -10,9 +10,9 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
         name: 'Wallet Connect PWA',
-        short_name: 'WalletPWA',
+        short_name: 'PrestifyM3',
         description: 'Aplicación PWA con conexión de wallet',
-        theme_color: '#4A90E2',
+        theme_color: '#2e7d32',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
