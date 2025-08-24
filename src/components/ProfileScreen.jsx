@@ -144,8 +144,6 @@ function ProfileScreen() {
               <span>Language</span>
               <select className="language-select" defaultValue="English">
                 <option>English</option>
-                <option>Español</option>
-                <option>Português</option>
               </select>
             </div>
 
@@ -153,14 +151,6 @@ function ProfileScreen() {
               <span>Notifications</span>
               <label className="switch">
                 <input type="checkbox" defaultChecked />
-                <span className="slider-switch"></span>
-              </label>
-            </div>
-
-            <div className="setting-item">
-              <span>Dark Mode</span>
-              <label className="switch">
-                <input type="checkbox" />
                 <span className="slider-switch"></span>
               </label>
             </div>
