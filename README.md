@@ -42,7 +42,7 @@ cd wallet-pwa-app && npm install
 ```bash
 cd wallet-pwa-app
 npm run dev
-
+```
 ---
 
 ## 🖼️ Interfaz de Usuario
