@@ -781,6 +781,26 @@ export class CreditScoringService {
         }
     }
 
+    async getAvailableLoansToInvest(walletAddress) {
+        try {
+            // Solo obtener préstamos que no sean de este wallet
+            const { data, error } = await supabase
+                .from('loan_requests')
+                .select('*')
+                .neq('wallet_address', walletAddress)  // Asumiendo que loan_requests tiene wallet_address
+                .order('created_at', { ascending: false })
+
+            if (error) {
+                console.error('Error fetching available loans:', error)
+                return []
+            }
+
+            return data || []
+        } catch (error) {
+            console.error('Error in getAvailableLoansToInvest:', error)
+            return []
+        }
+    }
     // Obtener un préstamo por ID
     async getLoanById(loanId) {
         try {
@@ -895,6 +915,202 @@ export class CreditScoringService {
             return data || []
         } catch (error) {
             console.error('Error in getInvestmentOpportunities:', error)
+            return []
+        }
+    }
+
+    // Agregar este método a tu archivo CreditScoringService.js
+
+    async getMarketplaceLoans(currentUserAddress) {
+        try {
+            const { data, error } = await supabase
+                .from('loan_requests')
+                .select(`
+                *,
+                credit_evaluations (
+                    final_score,
+                    interest_rate,
+                    category
+                ),
+                users!inner (
+                    wallet_address
+                )
+            `)
+                .neq('users.wallet_address', currentUserAddress)
+                .order('created_at', { ascending: false })
+
+            if (error) {
+                console.error('Error fetching loan history:', error)
+                return []
+            }
+
+            return data || []
+        } catch (error) {
+            console.error('Error in getUserLoanHistory:', error)
+            return []
+        }
+    }
+
+    // Método adicional para invertir en un préstamo (opcional)
+    async investInLoan(loanId, investmentAmount, investorAddress) {
+        console.log('Processing investment:', { loanId, investmentAmount, investorAddress })
+
+        try {
+            // Primero obtener el préstamo actual
+            const { data: loan, error: fetchError } = await supabase
+                .from('loan_requests')
+                .select('*')
+                .eq('id', loanId)
+                .single()
+
+            if (fetchError) throw fetchError
+
+            // Verificar que el préstamo acepta inversiones
+            if (loan.status !== 'pending' && loan.status !== 'active') {
+                throw new Error('Loan is not accepting investments')
+            }
+
+            // Calcular el nuevo monto aprobado
+            const newApprovedAmount = (loan.approved_amount || 0) + investmentAmount
+
+            // Verificar que no exceda el monto solicitado
+            if (newApprovedAmount > loan.requested_amount) {
+                throw new Error('Investment exceeds requested amount')
+            }
+
+            // Actualizar el préstamo con el nuevo monto
+            const { data: updatedLoan, error: updateError } = await supabase
+                .from('loan_requests')
+                .update({
+                    approved_amount: newApprovedAmount,
+                    status: newApprovedAmount >= loan.requested_amount ? 'funded' : loan.status,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', loanId)
+                .select()
+                .single()
+
+            if (updateError) throw updateError
+
+            // Opcionalmente, crear un registro de la inversión en una tabla separada
+            const { error: investmentError } = await supabase
+                .from('investments')
+                .insert({
+                    loan_id: loanId,
+                    investor_address: investorAddress,
+                    amount: investmentAmount,
+                    invested_at: new Date().toISOString()
+                })
+
+            // Si no tienes tabla de investments, puedes omitir esto
+            if (investmentError) {
+                console.warn('Could not record investment:', investmentError)
+            }
+
+            return updatedLoan
+
+        } catch (error) {
+            console.error('Error investing in loan:', error)
+            throw error
+        }
+    }
+
+    // Método para obtener todos los préstamos (sin filtrar por usuario)
+    async getAllLoans() {
+        try {
+            const { data, error } = await supabase
+                .from('loan_requests')
+                .select(`
+        *,
+        credit_evaluations (
+          credit_score,
+          risk_level
+        )
+      `)
+                .order('created_at', { ascending: false })
+
+            if (error) throw error
+
+            return data || []
+        } catch (error) {
+            console.error('Error fetching all loans:', error)
+            throw error
+        }
+    }
+
+    // Agregar este método a tu archivo services/creditScoring.js
+
+    async getMarketplaceLoans(currentUserAddress) {
+        console.log('Getting marketplace loans, excluding address:', currentUserAddress)
+
+        try {
+            // Query para obtener todos los préstamos excepto los del usuario actual
+            let query = supabase
+                .from('loan_requests')
+                .select('*')
+                .order('created_at', { ascending: false })
+
+            // Si hay un usuario conectado, excluir sus préstamos
+            if (currentUserAddress) {
+                query = query.neq('wallet_address', currentUserAddress.toLowerCase())
+            }
+
+            const { data, error } = await query
+
+            if (error) {
+                console.error('Supabase error:', error)
+                throw error
+            }
+
+            console.log(`Fetched ${data?.length || 0} marketplace loans`)
+            return data || []
+
+        } catch (error) {
+            console.error('Error fetching marketplace loans:', error)
+            return []
+        }
+    }
+
+    // Alternativamente, si tu tabla usa borrower_id en lugar de wallet_address:
+    async getMarketplaceLoansWithBorrowerId(currentUserId) {
+        console.log('Getting marketplace loans, excluding user:', currentUserId)
+
+        try {
+            let query = supabase
+                .from('loan_requests')
+                .select(`
+        *,
+        credit_evaluations (
+          credit_score,
+          risk_level
+        )
+      `)
+                .order('created_at', { ascending: false })
+
+            // Si hay un usuario conectado, excluir sus préstamos
+            if (currentUserId) {
+                query = query.neq('borrower_id', currentUserId)
+            }
+
+            const { data, error } = await query
+
+            if (error) {
+                console.error('Supabase error:', error)
+                throw error
+            }
+
+            // Mapear los datos si tienen credit_evaluations anidado
+            const loansWithScore = data?.map(loan => ({
+                ...loan,
+                credit_score: loan.credit_evaluations?.credit_score || loan.credit_score || 0,
+                risk_level: loan.credit_evaluations?.risk_level || null
+            })) || []
+
+            console.log(`Fetched ${loansWithScore.length} marketplace loans with scores`)
+            return loansWithScore
+
+        } catch (error) {
+            console.error('Error fetching marketplace loans:', error)
             return []
         }
     }
