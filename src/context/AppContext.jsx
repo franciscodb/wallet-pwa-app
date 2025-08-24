@@ -12,9 +12,9 @@ export const useApp = () => {
 
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState({
-    name: 'Ethan Carter',
-    email: 'ethan.carter@email.com',
-    joinDate: 'January 2024',
+    name: undefined,
+    email: undefined,
+    joinDate: undefined,
     score: 72,
     activeLoans: 12,
     pastLoans: 3,
