@@ -1,11 +1,58 @@
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { useDisconnect } from 'wagmi'
+import { useDisconnect, useAccount, useEnsName, useEnsAvatar } from 'wagmi'
+
+const shorten = (addr) => (addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : '')
+
+function useWalletProfile() {
+  const { address } = useAccount()
+
+  const { data: ensName } = useEnsName({
+    address,
+    chainId: 1,
+    query: { enabled: !!address },
+  })
+  const { data: ensAvatar } = useEnsAvatar({
+    name: ensName,
+    chainId: 1,
+    query: { enabled: !!ensName },
+  })
+
+  const displayName = ensName || shorten(address)
+  const handle = ensName ? `@${ensName}` : `@${shorten(address)}`
+  const avatarUrl = ensAvatar
+
+  return { displayName, handle, avatarUrl }
+}
+
+function useJoinDate(isConnected, userJoinDate) {
+  useEffect(() => {
+    if (!isConnected) return
+    if (!localStorage.getItem('pm3_joined_at')) {
+      localStorage.setItem('pm3_joined_at', new Date().toISOString())
+    }
+  }, [isConnected])
+
+  const joinedStr = useMemo(() => {
+    if (userJoinDate) return `Joined ${userJoinDate}`
+    const iso = localStorage.getItem('pm3_joined_at')
+    const d = iso ? new Date(iso) : new Date()
+    const label = d.toLocaleString('en-US', { month: 'long', year: 'numeric' })
+    return `Joined ${label}`
+  }, [userJoinDate])
+
+  return joinedStr
+}
 
 function ProfileScreen() {
   const navigate = useNavigate()
-  const { user } = useApp()
+  const { user } = useApp() 
   const { disconnect } = useDisconnect()
+  const { address, isConnected } = useAccount()
+
+  const { displayName, handle, avatarUrl } = useWalletProfile()
+  const joinedText = useJoinDate(isConnected, user?.joinDate)
 
   const handleLogout = () => {
     disconnect()
@@ -21,31 +68,47 @@ function ProfileScreen() {
           </svg>
         </button>
         <h1>Profile</h1>
-        <div style={{width: 24}}></div>
+        <div style={{ width: 24 }}></div>
       </div>
 
       <div className="profile-content">
         <div className="profile-header">
           <div className="profile-avatar">
-            <span>👤</span>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="avatar"
+                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover' }}
+              />
+            ) : (
+              <span>👤</span>
+            )}
           </div>
-          <h2>{user.name}</h2>
-          <p>@{user.email.split('@')[0]}</p>
-          <p className="join-date">Joined {user.joinDate}</p>
+
+          {/* Prefer context name if present, else ENS/short address */}
+          <h2>{user?.name || displayName || 'User'}</h2>
+
+          {/* Prefer email handle if present, else wallet handle */}
+          <p>
+            {user?.email ? `@${user.email.split('@')[0]}` : handle || '@anonymous'}
+          </p>
+
+          <p className="join-date">{joinedText}</p>
+
+          {/* Optional: show raw address small */}
+          {address && (
+            <p style={{ fontSize: 12, color: '#6B7280', marginTop: 6 }}>
+              {shorten(address)}
+            </p>
+          )}
         </div>
 
+        {/* ----- score section (unchanged) ----- */}
         <div className="score-section">
           <div className="score-card">
             <div className="score-circle">
               <svg width="150" height="150">
-                <circle
-                  cx="75"
-                  cy="75"
-                  r="65"
-                  stroke="#E5E7EB"
-                  strokeWidth="12"
-                  fill="none"
-                />
+                <circle cx="75" cy="75" r="65" stroke="#E5E7EB" strokeWidth="12" fill="none" />
                 <circle
                   cx="75"
                   cy="75"
@@ -53,12 +116,12 @@ function ProfileScreen() {
                   stroke="#2D9CDB"
                   strokeWidth="12"
                   fill="none"
-                  strokeDasharray={`${user.score * 4.08} 408`}
+                  strokeDasharray={`${(user?.score ?? 0) * 4.08} 408`}
                   transform="rotate(-90 75 75)"
                 />
               </svg>
               <div className="score-value">
-                <span className="score-number">{user.score}/100</span>
+                <span className="score-number">{(user?.score ?? 0)}/100</span>
                 <span className="score-label">Personal Score</span>
               </div>
             </div>
@@ -66,28 +129,29 @@ function ProfileScreen() {
 
           <div className="stats-grid">
             <div className="stat-card">
-              <span className="stat-value">{user.activeLoans}</span>
+              <span className="stat-value">{user?.activeLoans ?? 0}</span>
               <span className="stat-label">Active Loans</span>
             </div>
             <div className="stat-card">
-              <span className="stat-value">{user.pastLoans}</span>
+              <span className="stat-value">{user?.pastLoans ?? 0}</span>
               <span className="stat-label">Past Loans</span>
             </div>
           </div>
         </div>
 
+        {/* ----- settings section (unchanged) ----- */}
         <div className="settings-section">
           <h3>Settings</h3>
           <div className="settings-list">
             <div className="setting-item">
               <span>Language</span>
-              <select className="language-select">
+              <select className="language-select" defaultValue="English">
                 <option>English</option>
                 <option>Español</option>
                 <option>Português</option>
               </select>
             </div>
-            
+
             <div className="setting-item">
               <span>Notifications</span>
               <label className="switch">
